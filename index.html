@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>altauto | 연구 작업 클러스터</title><style>
+:root { color-scheme:dark; --paper:#0f1520; --surface:#151e2c; --raised:#1c293c;
+  --ink:#e5edf8; --muted:#a0afc4; --line:#34465e; --blue:#3987e5;
+  --focus:#9fc8ff; --good:#a3d9b6; --bad:#ffb5a7; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); word-break:keep-all;
+  font:15px/1.65 'Segoe UI','Malgun Gothic',sans-serif; }
+a { color:var(--focus); text-underline-offset:4px; }
+a:focus-visible,summary:focus-visible,input:focus-visible { outline:2px solid var(--focus); outline-offset:5px; }
+header,main,footer { max-width:1480px; margin:auto; padding:24px 38px; }
+header { display:flex; justify-content:space-between; align-items:center; gap:20px; border-bottom:1px solid #27364a; }
+.brand { display:flex; align-items:center; gap:12px; font-size:23px; font-weight:700; letter-spacing:-.8px; }
+.brand::before { content:''; width:18px; height:18px; border:4px solid var(--blue); border-radius:50%; }
+.header-right { display:flex; gap:25px; font-size:12px; color:var(--muted); align-items:center; }
+.header-right a { color:var(--muted); text-decoration:none; }
+.hero { display:flex; justify-content:space-between; align-items:end; gap:25px; padding:5px 0 26px; }
+h1 { font-size:clamp(27px,3.1vw,38px); line-height:1.3; letter-spacing:-1.2px; margin:0 0 10px; font-weight:650; }
+h2 { font-size:23px; line-height:1.4; margin:0 0 14px; }
+h3 { font-size:16px; margin:0; }
+p { max-width:76ch; margin:0 0 16px; }
+.lead { color:var(--muted); font-size:14px; margin:0; }
+.run-receipt { text-align:right; flex-shrink:0; }
+.run-receipt p { font-size:13px; margin:0; }
+.run-receipt small { color:var(--muted); font-size:11px; }
+.verdict { color:var(--good); }
+.verdict.failed,.badge.failed { color:var(--bad); }
+.mindmap { background:#121925; border:1px solid #2d3e55; border-radius:20px; overflow:clip; margin-bottom:38px; }
+.map-heading { display:flex; justify-content:space-between; align-items:center; gap:20px;
+  padding:21px 26px 15px; border-bottom:1px solid #27364a; }
+.map-heading h2 { font-size:17px; margin:0 0 4px; }
+.map-heading p { color:var(--muted); font-size:12px; margin:0; }
+.replay-label { color:var(--ink); background:#20334c; border:1px solid #365173;
+  border-radius:7px; padding:6px 11px; font-size:11px; white-space:nowrap; }
+.pause-control { accent-color:var(--blue); width:16px; height:16px; margin:17px 7px 0 26px; vertical-align:middle; }
+.pause-control + label { font-size:12px; cursor:pointer; }
+.motion-override,.motion-override + label,.motion-note { display:none; }
+.simulation-stage { position:relative; height:850px; isolation:isolate; margin:0 16px; }
+.connections { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.connection { fill:none; stroke:#3b506c; stroke-width:1.4; vector-effect:non-scaling-stroke; }
+.trunk { stroke:#496482; stroke-width:1.8; }
+.junction { fill:#121925; stroke:#6485ab; stroke-width:2; }
+.flow { fill:none; stroke:var(--blue); stroke-width:3; stroke-linecap:round;
+  stroke-dasharray:9 91; stroke-dashoffset:9; opacity:0; vector-effect:non-scaling-stroke; }
+.animated { animation:var(--animation) var(--cycle) linear infinite; animation-delay:var(--phase); }
+.cluster { position:absolute; margin:0; border:1px solid #293b53; border-radius:22px; background:#17213170; }
+.cluster-heading { position:absolute; top:17px; left:20px; right:20px; display:flex;
+  justify-content:space-between; gap:14px; align-items:start; z-index:2; }
+.map-node { color:var(--ink); text-decoration:none; display:block; position:relative; }
+.map-node strong { font-size:15px; font-weight:600; }
+.cluster-note { display:block; font-size:11px; color:var(--muted); margin-top:2px; }
+.cluster-total { font-size:11px; color:var(--muted); white-space:nowrap; padding-top:3px; }
+.node-tip { display:none; position:absolute; top:calc(100% + 8px); left:0; width:260px; padding:13px;
+  background:#25374e; color:var(--ink); border:1px solid #6883a5; border-radius:8px; font-size:12px;
+  box-shadow:0 12px 35px #0006; z-index:10; overflow-wrap:anywhere; }
+.map-node:hover .node-tip,.map-node:focus-visible .node-tip { display:block; }
+.task-node { position:absolute; width:42%; transform:translate(-50%,-50%); padding:10px 12px;
+  min-height:65px; border:1px solid #455c79; border-radius:11px; background:#192538;
+  color:var(--ink); text-decoration:none; z-index:3; }
+.task-node:hover,.task-node:focus-visible { outline:2px solid var(--focus); outline-offset:3px; z-index:6; }
+.task-node .node-tip { width:260px; max-width:70vw; }
+.task-node:hover .node-tip,.task-node:focus-visible .node-tip { display:block; }
+.node-title { display:flex; gap:8px; align-items:center; font-size:13px; font-weight:600; }
+.node-number { color:var(--muted); font-size:10px; font-variant-numeric:tabular-nums; }
+.node-meta { display:flex; justify-content:space-between; gap:5px; font-size:10px; color:var(--muted); margin-top:5px; }
+.recorded-code { white-space:nowrap; }
+.recorded-code.unexpected { color:var(--bad); }
+.playing { opacity:0; color:var(--ink); white-space:nowrap; }
+.playing::before { content:''; display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--blue); margin-right:4px; }
+.map-core { position:absolute; left:40%; top:38%; width:20%; height:29%; min-height:248px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px 10px;
+  border:1px solid #53749b; border-radius:28px; background:#19293f; z-index:4;
+  box-shadow:0 0 0 8px #1d34522b,0 0 70px #214c7d24; text-align:center; }
+.map-core > strong { font-size:27px; letter-spacing:-.8px; }
+.core-caption { color:var(--muted); font-size:10px; margin:2px 0 13px; }
+.activity-stack { position:relative; flex:none; width:100%; height:100px; }
+.activity-frame { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  opacity:0; visibility:hidden; padding:0 5px; }
+.activity-frame strong { font-size:16px; font-weight:600; }
+.activity-frame span { display:block; font-size:10px; color:var(--muted); margin-top:5px; overflow-wrap:anywhere; }
+.static-caption { display:none; font-size:12px; color:var(--muted); }
+.core-count { font-size:10px; color:var(--muted); border-top:1px solid #3a516c; padding-top:10px; margin-top:7px; }
+.playback-rail { margin:8px 26px 18px; }
+.rail-label { display:flex; justify-content:space-between; gap:15px; font-size:11px; color:var(--muted); margin-bottom:8px; }
+.rail-track { height:3px; background:#30445e; border-radius:3px; overflow:hidden; }
+.rail-progress { display:block; width:100%; height:100%; background:var(--blue); transform-origin:left; transform:scaleX(0); }
+.map-footnote { font-size:11px; color:var(--muted); padding:16px 26px; margin:0;
+  max-width:none; border-top:1px solid #27364a; }
+.section-head { display:flex; justify-content:space-between; align-items:baseline; gap:20px;
+  border-bottom:1px solid var(--line); padding-bottom:13px; }
+.section-head h2 { margin:0; font-size:20px; }
+.section-head span { font-size:12px; color:var(--muted); }
+section { margin-bottom:36px; }
+.check { display:grid; grid-template-columns:34px 1fr 105px; gap:18px; padding:20px 0; border-bottom:1px solid #293b53; }
+.ordinal { font-size:14px; color:var(--muted); }
+.check h3 { font-size:14px; }
+.check p { color:var(--muted); margin:5px 0 0; font-size:12px; overflow-wrap:anywhere; }
+.badge { font-size:11px; color:var(--good); text-align:right; }
+.check:target,.command-record:target { background:#22354f; outline:6px solid #22354f; scroll-margin-top:25px; }
+.record { display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+dl { margin:0; }
+.stat { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #293b53; font-size:13px; }
+dd { margin:0; font-weight:650; }
+.links { padding:22px; background:var(--surface); border:1px solid #30415a; border-radius:12px; }
+.links a { display:block; margin:7px 0; font-size:13px; }
+.notice { padding:22px; background:var(--surface); border-left:3px solid var(--blue); }
+.notice p { color:var(--muted); font-size:13px; }
+.notice p:last-child { margin:0; }
+.command-record { padding:13px 0; border-bottom:1px solid #293b53; }
+summary { cursor:pointer; font-size:13px; }
+pre { background:#182538; border-radius:7px; padding:16px; font:12px/1.7 Consolas,monospace;
+  white-space:pre-wrap; overflow-wrap:anywhere; }
+.returncode { font-size:12px; color:var(--muted); margin:0; }
+footer { border-top:1px solid #293b53; color:var(--muted); font-size:11px; }
+@keyframes rail { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@media(max-width:1050px) {
+  header,main,footer { padding:22px; }
+  .simulation-stage { height:800px; margin:0 8px; }
+  .task-node { padding:10px 8px; width:44%; }
+  .node-title { font-size:11px; gap:5px; }
+  .cluster-heading { left:13px; right:13px; }
+  .cluster-note { font-size:10px; }
+  .cluster-total { display:none; }
+  .map-core { left:39%; width:22%; }
+}
+@media(max-width:680px) {
+  header,main,footer { padding:18px; }
+  .header-right a { display:none; }
+  .header-right { font-size:10px; }
+  .hero { display:block; }
+  .run-receipt { text-align:left; margin-top:15px; }
+  .map-heading { display:block; padding:18px; }
+  .replay-label { display:inline-block; margin-top:10px; font-size:10px; white-space:normal; }
+  .pause-control { margin-left:18px; }
+  .simulation-stage { height:auto; display:flex; flex-direction:column; gap:18px; margin:18px 12px; }
+  .connections { display:none; }
+  .map-core { position:relative; inset:auto; width:100%; height:260px; order:-1; }
+  .cluster { position:relative; inset:auto !important; width:100% !important; height:auto !important;
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:16px 12px; }
+  .cluster-heading { position:static; grid-column:1/-1; margin-bottom:3px; }
+  .cluster-total { display:block; font-size:10px; }
+  .task-node { position:relative; inset:auto !important; width:100%; transform:none; padding:10px 8px; min-height:78px; }
+  .node-title { font-size:11px; align-items:start; }
+  .node-meta { flex-direction:column; gap:2px; }
+  .node-tip,.task-node .node-tip { position:static; max-width:100%; width:auto; margin-top:9px; box-shadow:none; }
+  .rail-label { font-size:10px; }
+  .playback-rail { margin:8px 18px 18px; }
+  .map-footnote { padding:15px 18px; }
+  .section-head { display:block; }
+  .check { grid-template-columns:22px 1fr; gap:10px; }
+  .badge { grid-column:2; text-align:left; }
+  .record { grid-template-columns:1fr; gap:20px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .simulation-stage .animated,.playback-rail .animated { animation:none !important; }
+  .flow { display:none; }
+  .motion-note { display:inline; }
+  .static-caption { display:block; }
+  .motion-override { display:inline-block; accent-color:var(--blue); margin-left:15px; }
+  .motion-override + label { display:inline; font-size:12px; cursor:pointer; }
+  #allow-motion:checked ~ .simulation-stage .animated,#allow-motion:checked ~ .playback-rail .animated {
+    animation:var(--animation) var(--cycle) linear infinite !important; animation-delay:var(--phase) !important; }
+  #allow-motion:checked ~ .simulation-stage .flow { display:block; }
+  #allow-motion:checked ~ .simulation-stage .static-caption { display:none; }
+}
+#pause-replay:checked ~ .simulation-stage .animated,
+#pause-replay:checked ~ .playback-rail .animated { animation-play-state:paused !important; }
+@media(forced-colors:active) {
+  .cluster,.task-node,.map-core { border:1px solid CanvasText; }
+  .connection { stroke:CanvasText; }
+  .flow { display:none !important; }
+}
+@media print {
+  body { background:white; color:black; }
+  .simulation-stage .animated,.playback-rail .animated { animation:none !important; }
+  .pause-control,.pause-control + label,.motion-override,.motion-override + label,.flow,.playback-rail { display:none !important; }
+  .static-caption { display:block; }
+}
+
+@keyframes node-phase {
+  0%,5.554556% { border-color:var(--blue); background:#243b59; box-shadow:0 0 0 3px #3987e522,0 0 24px #3987e51a; }
+  5.555556%,100% { border-color:#455c79; background:#192538; box-shadow:none; }
+}
+@keyframes active-label {
+  0%,5.554556% { opacity:1; visibility:visible; }
+  5.555556%,100% { opacity:0; visibility:hidden; }
+}
+@keyframes flow {
+  0% { stroke-dashoffset:9; opacity:1; }
+  5.554556% { stroke-dashoffset:-100; opacity:1; }
+  5.555556%,100% { stroke-dashoffset:-100; opacity:0; }
+}
+</style></head>
+<body><header><span class="brand">altauto</span><div class="header-right"><a href="#map-title">작업 지도</a><a href="#verification">검증 기록</a><span>합성 데이터 / 실행 기록</span></div></header>
+<main><div class="hero"><div><h1>연구가 흘러가는 자리.</h1><p class="lead">출처부터 보고서까지, 각 작업이 어디에서 무엇을 하는지 따라가 보세요.</p></div>
+<aside class="run-receipt"><p class="verdict" role="status">Verification completed: 10/10</p>
+<small>완료된 실제 데모 기록 / 라이브 실행 아님</small></aside></div>
+<section class="mindmap" aria-labelledby="map-title" style="--cycle:54s">
+<div class="map-heading"><div><h2 id="map-title">연구 작업 클러스터</h2><p>빛나는 노드가 현재 재생 중인 작업입니다. 각 노드에서 명령 기록을 확인할 수 있습니다.</p></div>
+<span class="replay-label">기록 기반 UI 시뮬레이션 · 실제 실행 아님</span></div>
+<input class="pause-control" type="checkbox" id="pause-replay" aria-controls="simulation-stage playback-rail">
+<label for="pause-replay">애니메이션 일시정지</label>
+<input class="motion-override" type="checkbox" id="allow-motion" aria-controls="simulation-stage playback-rail" checked>
+<label for="allow-motion">동작 줄이기 설정에서도 재생</label>
+<div class="simulation-stage" id="simulation-stage">
+<svg class="connections" viewBox="0 0 1200 850" preserveAspectRatio="none" aria-hidden="true"><path class="connection trunk" d="M600 425 C600 108 240 425 240 108"/><circle class="junction" cx="240" cy="108" r="4"/><path class="connection" d="M240 108 C240 171.66666666666666 130.0 108 130.0 171.66666666666666"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 240 425 240 108 C240 171.66666666666666 130.0 108 130.0 171.66666666666666" style="--animation:flow;--phase:0s"/><path class="connection" d="M240 108 C240 171.66666666666666 350.0 108 350.0 171.66666666666666"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 240 425 240 108 C240 171.66666666666666 350.0 108 350.0 171.66666666666666" style="--animation:flow;--phase:3s"/><path class="connection" d="M240 108 C240 245.0 130.0 108 130.0 245.0"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 240 425 240 108 C240 245.0 130.0 108 130.0 245.0" style="--animation:flow;--phase:6s"/><path class="connection" d="M240 108 C240 245.0 350.0 108 350.0 245.0"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 240 425 240 108 C240 245.0 350.0 108 350.0 245.0" style="--animation:flow;--phase:9s"/><path class="connection" d="M240 108 C240 318.33333333333337 130.0 108 130.0 318.33333333333337"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 240 425 240 108 C240 318.33333333333337 130.0 108 130.0 318.33333333333337" style="--animation:flow;--phase:12s"/><path class="connection" d="M240 108 C240 318.33333333333337 350.0 108 350.0 318.33333333333337"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 240 425 240 108 C240 318.33333333333337 350.0 108 350.0 318.33333333333337" style="--animation:flow;--phase:18s"/><path class="connection trunk" d="M600 425 C600 108 970 425 970 108"/><circle class="junction" cx="970" cy="108" r="4"/><path class="connection" d="M970 108 C970 220.0 865.0 108 865.0 220.0"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 970 425 970 108 C970 220.0 865.0 108 865.0 220.0" style="--animation:flow;--phase:21s"/><path class="connection" d="M970 108 C970 220.0 1075.0 108 1075.0 220.0"/><path class="flow animated" pathLength="100" d="M600 425 C600 108 970 425 970 108 C970 220.0 1075.0 108 1075.0 220.0" style="--animation:flow;--phase:24s"/><path class="connection trunk" d="M600 425 C600 538 970 425 970 538"/><circle class="junction" cx="970" cy="538" r="4"/><path class="connection" d="M970 538 C970 601.6666666666666 865.0 538 865.0 601.6666666666666"/><path class="flow animated" pathLength="100" d="M600 425 C600 538 970 425 970 538 C970 601.6666666666666 865.0 538 865.0 601.6666666666666" style="--animation:flow;--phase:15s"/><path class="connection" d="M970 538 C970 601.6666666666666 1075.0 538 1075.0 601.6666666666666"/><path class="flow animated" pathLength="100" d="M600 425 C600 538 970 425 970 538 C970 601.6666666666666 1075.0 538 1075.0 601.6666666666666" style="--animation:flow;--phase:27s"/><path class="connection" d="M970 538 C970 675.0 865.0 538 865.0 675.0"/><path class="flow animated" pathLength="100" d="M600 425 C600 538 970 425 970 538 C970 675.0 865.0 538 865.0 675.0" style="--animation:flow;--phase:30s"/><path class="connection" d="M970 538 C970 675.0 1075.0 538 1075.0 675.0"/><path class="flow animated" pathLength="100" d="M600 425 C600 538 970 425 970 538 C970 675.0 1075.0 538 1075.0 675.0" style="--animation:flow;--phase:33s"/><path class="connection" d="M970 538 C970 748.3333333333334 865.0 538 865.0 748.3333333333334"/><path class="flow animated" pathLength="100" d="M600 425 C600 538 970 425 970 538 C970 748.3333333333334 865.0 538 865.0 748.3333333333334" style="--animation:flow;--phase:36s"/><path class="connection" d="M970 538 C970 748.3333333333334 1075.0 538 1075.0 748.3333333333334"/><path class="flow animated" pathLength="100" d="M600 425 C600 538 970 425 970 538 C970 748.3333333333334 1075.0 538 1075.0 748.3333333333334" style="--animation:flow;--phase:39s"/><path class="connection trunk" d="M600 425 C600 588 240 425 240 588"/><circle class="junction" cx="240" cy="588" r="4"/><path class="connection" d="M240 588 C240 657.5 130.0 588 130.0 657.5"/><path class="flow animated" pathLength="100" d="M600 425 C600 588 240 425 240 588 C240 657.5 130.0 588 130.0 657.5" style="--animation:flow;--phase:42s"/><path class="connection" d="M240 588 C240 657.5 350.0 588 350.0 657.5"/><path class="flow animated" pathLength="100" d="M600 425 C600 588 240 425 240 588 C240 657.5 350.0 588 350.0 657.5" style="--animation:flow;--phase:45s"/><path class="connection" d="M240 588 C240 742.5 130.0 588 130.0 742.5"/><path class="flow animated" pathLength="100" d="M600 425 C600 588 240 425 240 588 C240 742.5 130.0 588 130.0 742.5" style="--animation:flow;--phase:48s"/><path class="connection" d="M240 588 C240 742.5 350.0 588 350.0 742.5"/><path class="flow animated" pathLength="100" d="M600 425 C600 588 240 425 240 588 C240 742.5 350.0 588 350.0 742.5" style="--animation:flow;--phase:51s"/></svg>
+<section class="cluster cluster-source" aria-label="출처·인용 클러스터" style="left:1.6666666666666667%;top:3.5294117647058822%;width:36.666666666666664%;height:41.1764705882353%"><div class="cluster-heading"><a class="map-node node-source" href="#check-01"><strong>출처·인용</strong><span class="cluster-note">원문에서 근거 기록까지</span><span class="node-tip">✓ 기록 검증 통과. 검증 항목 2/2. 클릭하면 근거로 이동합니다.</span></a><span class="cluster-total">6개 노드 · <span>2/2</span> 검증</span></div><a class="task-node animated" data-step="1" href="#command-01" style="left:25.0000%;top:40.4762%;--animation:node-phase;--phase:0s"><span class="node-title"><span class="node-number">01</span>프로젝트 초기화</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:0s">재생 중</span></span><span class="node-tip">brief · protocol · policy<br>python -m altauto --project project init --brief brief.md --protocol protocol.json --policy policy.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="2" href="#command-02" style="left:75.0000%;top:40.4762%;--animation:node-phase;--phase:3s"><span class="node-title"><span class="node-number">02</span>읽기 작업 등록</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:3s">재생 중</span></span><span class="node-tip">read-note / 작업 제안<br>python -m altauto --project project propose reading-task.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="3" href="#command-03" style="left:25.0000%;top:61.4286%;--animation:node-phase;--phase:6s"><span class="node-title"><span class="node-number">03</span>읽기 작업 선택</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:6s">재생 중</span></span><span class="node-tip">read-note / 명시적 선택<br>python -m altauto --project project next --task read-note<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="4" href="#command-04" style="left:75.0000%;top:61.4286%;--animation:node-phase;--phase:9s"><span class="node-title"><span class="node-number">04</span>원문·해시 연결</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:9s">재생 중</span></span><span class="node-tip">source.md / revision-1<br>python -m altauto --project project source --citation &#x27;Synthetic archive note, paragraphs 2-3&#x27; --revision revision-1 --file source.md<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="5" href="#command-05" style="left:25.0000%;top:82.3810%;--animation:node-phase;--phase:12s"><span class="node-title"><span class="node-number">05</span>원문 인용 기록</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:12s">재생 중</span></span><span class="node-tip">finding.json / 출처 연결<br>python -m altauto --project project record finding.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="7" href="#command-07" style="left:75.0000%;top:82.3810%;--animation:node-phase;--phase:18s"><span class="node-title"><span class="node-number">07</span>문헌 읽기 완료</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:18s">재생 중</span></span><span class="node-tip">read-note / 완료 기록<br>python -m altauto --project project complete read-note<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a></section><section class="cluster cluster-execution" aria-label="로컬 계산 클러스터" style="left:63.333333333333336%;top:3.5294117647058822%;width:35.0%;height:35.294117647058826%"><div class="cluster-heading"><a class="map-node node-execution" href="#check-04"><strong>로컬 계산</strong><span class="cluster-note">합성 입력의 제한된 실행</span><span class="node-tip">✓ 기록 검증 통과. 검증 항목 1/1. 클릭하면 근거로 이동합니다.</span></a><span class="cluster-total">2개 노드 · <span>1/1</span> 검증</span></div><a class="task-node animated" data-step="8" href="#command-08" style="left:25.0000%;top:63.3333%;--animation:node-phase;--phase:21s"><span class="node-title"><span class="node-number">08</span>계산 작업 등록</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:21s">재생 중</span></span><span class="node-tip">arithmetic-smoke / 합성 입력<br>python -m altauto --project project propose test-task.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="9" href="#command-09" style="left:75.0000%;top:63.3333%;--animation:node-phase;--phase:24s"><span class="node-title"><span class="node-number">09</span>배열 평균 계산</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:24s">재생 중</span></span><span class="node-tip">arithmetic-smoke / 로컬 실행 기록<br>python -m altauto --project project execute arithmetic-smoke<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a></section><section class="cluster cluster-safeguards" aria-label="안전장치 클러스터" style="left:63.333333333333336%;top:54.11764705882353%;width:35.0%;height:41.1764705882353%"><div class="cluster-heading"><a class="map-node node-safeguards" href="#check-03"><strong>안전장치</strong><span class="cluster-note">거부 경로와 조건 변경</span><span class="node-tip">✓ 기록 검증 통과. 검증 항목 3/3. 클릭하면 근거로 이동합니다.</span></a><span class="cluster-total">6개 노드 · <span>3/3</span> 검증</span></div><a class="task-node animated" data-step="6" href="#command-06" style="left:25.0000%;top:40.4762%;--animation:node-phase;--phase:15s"><span class="node-title"><span class="node-number">06</span>허위 인용 차단</span><span class="node-meta"><span class="recorded-code">예상 거부 · exit 2</span><span class="playing animated" style="--animation:active-label;--phase:15s">재생 중</span></span><span class="node-tip">invalid-finding.json / 거부 경로<br>python -m altauto --project project record invalid-finding.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="10" href="#command-10" style="left:75.0000%;top:40.4762%;--animation:node-phase;--phase:27s"><span class="node-title"><span class="node-number">10</span>중복 실행 차단</span><span class="node-meta"><span class="recorded-code">예상 거부 · exit 2</span><span class="playing animated" style="--animation:active-label;--phase:27s">재생 중</span></span><span class="node-tip">arithmetic-smoke / 재실행 거부<br>python -m altauto --project project execute arithmetic-smoke<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="11" href="#command-11" style="left:25.0000%;top:61.4286%;--animation:node-phase;--phase:30s"><span class="node-title"><span class="node-number">11</span>변경 전 작업 등록</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:30s">재생 중</span></span><span class="node-tip">stale-smoke / 이전 조건<br>python -m altauto --project project propose stale-task.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="12" href="#command-12" style="left:75.0000%;top:61.4286%;--animation:node-phase;--phase:33s"><span class="node-title"><span class="node-number">12</span>연구 조건 변경</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:33s">재생 중</span></span><span class="node-tip">steered-brief.md / 새 버전<br>python -m altauto --project project steer --brief steered-brief.md --protocol protocol.json<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="13" href="#command-13" style="left:25.0000%;top:82.3810%;--animation:node-phase;--phase:36s"><span class="node-title"><span class="node-number">13</span>오래된 실행 차단</span><span class="node-meta"><span class="recorded-code">예상 거부 · exit 2</span><span class="playing animated" style="--animation:active-label;--phase:36s">재생 중</span></span><span class="node-tip">stale-smoke / 재검토 필요<br>python -m altauto --project project execute stale-smoke<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="14" href="#command-14" style="left:75.0000%;top:82.3810%;--animation:node-phase;--phase:39s"><span class="node-title"><span class="node-number">14</span>오래된 판단 차단</span><span class="node-meta"><span class="recorded-code">예상 거부 · exit 2</span><span class="playing animated" style="--animation:active-label;--phase:39s">재생 중</span></span><span class="node-tip">stale-smoke / 판단 거부<br>python -m altauto --project project decide stale-smoke --rationale &#x27;A stale task must not gain a new decision.&#x27;<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a></section><section class="cluster cluster-replay" aria-label="상태·보고 클러스터" style="left:1.6666666666666667%;top:60.0%;width:36.666666666666664%;height:35.294117647058826%"><div class="cluster-heading"><a class="map-node node-replay" href="#check-07"><strong>상태·보고</strong><span class="cluster-note">결과를 보존하고 다시 읽기</span><span class="node-tip">✓ 기록 검증 통과. 검증 항목 4/4. 클릭하면 근거로 이동합니다.</span></a><span class="cluster-total">4개 노드 · <span>4/4</span> 검증</span></div><a class="task-node animated" data-step="15" href="#command-15" style="left:25.0000%;top:49.1667%;--animation:node-phase;--phase:42s"><span class="node-title"><span class="node-number">15</span>재개 전 상태 조회</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:42s">재생 중</span></span><span class="node-tip">원장 / 완료 상태 읽기<br>python -m altauto --project project status<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="16" href="#command-16" style="left:75.0000%;top:49.1667%;--animation:node-phase;--phase:45s"><span class="node-title"><span class="node-number">16</span>별도 프로세스 재개</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:45s">재생 중</span></span><span class="node-tip">원장 / 완료 결과 보존<br>python -m altauto --project project resume<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="17" href="#command-17" style="left:25.0000%;top:77.5000%;--animation:node-phase;--phase:48s"><span class="node-title"><span class="node-number">17</span>재개 후 상태 대조</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:48s">재생 중</span></span><span class="node-tip">원장 / 이전 결과와 대조<br>python -m altauto --project project status<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a><a class="task-node animated" data-step="18" href="#command-18" style="left:75.0000%;top:77.5000%;--animation:node-phase;--phase:51s"><span class="node-title"><span class="node-number">18</span>근거 보고서 생성</span><span class="node-meta"><span class="recorded-code">확인 · exit 0</span><span class="playing animated" style="--animation:active-label;--phase:51s">재생 중</span></span><span class="node-tip">report.md / 출처와 한계<br>python -m altauto --project project report<br>클릭하면 해당 명령 기록으로 이동합니다.</span></a></section><div class="map-core"><strong>altauto</strong><span class="core-caption">현재 작업 · 화면 재생</span>
+<div class="activity-stack" aria-hidden="true"><div class="activity-frame animated" data-step="1" style="--animation:active-label;--phase:0s"><strong>프로젝트 초기화</strong><span>출처·인용 / 01 of 18</span><span>brief · protocol · policy</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="2" style="--animation:active-label;--phase:3s"><strong>읽기 작업 등록</strong><span>출처·인용 / 02 of 18</span><span>read-note / 작업 제안</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="3" style="--animation:active-label;--phase:6s"><strong>읽기 작업 선택</strong><span>출처·인용 / 03 of 18</span><span>read-note / 명시적 선택</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="4" style="--animation:active-label;--phase:9s"><strong>원문·해시 연결</strong><span>출처·인용 / 04 of 18</span><span>source.md / revision-1</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="5" style="--animation:active-label;--phase:12s"><strong>원문 인용 기록</strong><span>출처·인용 / 05 of 18</span><span>finding.json / 출처 연결</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="6" style="--animation:active-label;--phase:15s"><strong>허위 인용 차단</strong><span>안전장치 / 06 of 18</span><span>invalid-finding.json / 거부 경로</span><span>기록: 예상 거부 · exit 2</span></div><div class="activity-frame animated" data-step="7" style="--animation:active-label;--phase:18s"><strong>문헌 읽기 완료</strong><span>출처·인용 / 07 of 18</span><span>read-note / 완료 기록</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="8" style="--animation:active-label;--phase:21s"><strong>계산 작업 등록</strong><span>로컬 계산 / 08 of 18</span><span>arithmetic-smoke / 합성 입력</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="9" style="--animation:active-label;--phase:24s"><strong>배열 평균 계산</strong><span>로컬 계산 / 09 of 18</span><span>arithmetic-smoke / 로컬 실행 기록</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="10" style="--animation:active-label;--phase:27s"><strong>중복 실행 차단</strong><span>안전장치 / 10 of 18</span><span>arithmetic-smoke / 재실행 거부</span><span>기록: 예상 거부 · exit 2</span></div><div class="activity-frame animated" data-step="11" style="--animation:active-label;--phase:30s"><strong>변경 전 작업 등록</strong><span>안전장치 / 11 of 18</span><span>stale-smoke / 이전 조건</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="12" style="--animation:active-label;--phase:33s"><strong>연구 조건 변경</strong><span>안전장치 / 12 of 18</span><span>steered-brief.md / 새 버전</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="13" style="--animation:active-label;--phase:36s"><strong>오래된 실행 차단</strong><span>안전장치 / 13 of 18</span><span>stale-smoke / 재검토 필요</span><span>기록: 예상 거부 · exit 2</span></div><div class="activity-frame animated" data-step="14" style="--animation:active-label;--phase:39s"><strong>오래된 판단 차단</strong><span>안전장치 / 14 of 18</span><span>stale-smoke / 판단 거부</span><span>기록: 예상 거부 · exit 2</span></div><div class="activity-frame animated" data-step="15" style="--animation:active-label;--phase:42s"><strong>재개 전 상태 조회</strong><span>상태·보고 / 15 of 18</span><span>원장 / 완료 상태 읽기</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="16" style="--animation:active-label;--phase:45s"><strong>별도 프로세스 재개</strong><span>상태·보고 / 16 of 18</span><span>원장 / 완료 결과 보존</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="17" style="--animation:active-label;--phase:48s"><strong>재개 후 상태 대조</strong><span>상태·보고 / 17 of 18</span><span>원장 / 이전 결과와 대조</span><span>기록: 확인 · exit 0</span></div><div class="activity-frame animated" data-step="18" style="--animation:active-label;--phase:51s"><strong>근거 보고서 생성</strong><span>상태·보고 / 18 of 18</span><span>report.md / 출처와 한계</span><span>기록: 확인 · exit 0</span></div><span class="static-caption">정지된 기록 지도<br>아래 노드에서 작업을 확인하세요.</span></div>
+<span class="core-count">18개 명령 기록 · 10개 검증 항목</span></div></div>
+<div class="playback-rail" id="playback-rail"><div class="rail-label"><span>화면 재생 위치 / 명령 기록 순서</span><span>노드당 3초 · 54초 반복</span></div>
+<div class="rail-track" aria-hidden="true"><span class="rail-progress animated" style="--animation:rail;--phase:0s"></span></div></div>
+<p class="map-footnote">클러스터는 작업의 역할을, 노드 번호는 기록된 호출 순서를 나타냅니다. 재생 시간은 화면 연출이며 실제 소요 시간이 아닙니다.
+화면 재생 중 새 명령·모델·네트워크 호출은 발생하지 않습니다. <span class="motion-note">동작 줄이기 설정에서도 기본 재생합니다. 위 재생 체크를 해제하면 정지 화면으로 바뀝니다.</span></p></section>
+<section id="verification"><div class="section-head"><h2>검증 기록</h2><span>화면 연출과 분리된 실제 검증 결과</span></div><article class="check" id="check-01"><span class="ordinal">01</span><div><h3>Explicit task selection</h3><p>The real CLI selected the accepted reading task.</p></div><span class="badge">Verified</span></article><article class="check" id="check-02"><span class="ordinal">02</span><div><h3>Hash-bound source and exact quotation</h3><p>One exact quotation is retained with source hash/revision and unverified validity.</p></div><span class="badge">Verified</span></article><article class="check" id="check-03"><span class="ordinal">03</span><div><h3>Invalid quote rejected without ledger changes</h3><p>The invented quotation returned exit 2; all ledger bytes are unchanged.</p></div><span class="badge">Verified</span></article><article class="check" id="check-04"><span class="ordinal">04</span><div><h3>Bounded arithmetic result, not scientific success</h3><p>Means 2 and 3 yield delta 1; terminal status and claim boundary were inspected.</p></div><span class="badge">Verified</span></article><article class="check" id="check-05"><span class="ordinal">05</span><div><h3>Duplicate execution refused</h3><p>A second execution returned exit 2 without a new run or ledger mutation.</p></div><span class="badge">Verified</span></article><article class="check" id="check-06"><span class="ordinal">06</span><div><h3>Steering requires review of stale work</h3><p>Stale execution/decision returned exit 2; the original completed result is unchanged.</p></div><span class="badge">Verified</span></article><article class="check" id="check-07"><span class="ordinal">07</span><div><h3>Separate-process replay preserves completed evidence</h3><p>Independent CLI processes replay the same state; resume does not overwrite results.</p></div><span class="badge">Verified</span></article><article class="check" id="check-08"><span class="ordinal">08</span><div><h3>Report retains evidence and limitations</h3><p>The CLI report contains the quotation, provenance, original run and review requirement.</p></div><span class="badge">Verified</span></article><article class="check" id="check-09"><span class="ordinal">09</span><div><h3>Every real CLI exit matches its contract</h3><p>Expected negative-path exits are recorded, not hidden or retried.</p></div><span class="badge">Verified</span></article><article class="check" id="check-10"><span class="ordinal">10</span><div><h3>Bounded final state</h3><p>Three accepted tasks, one finding, one completed run; stale work remains for review.</p></div><span class="badge">Verified</span></article></section>
+<section class="record"><div><h2>완료된 실행의 기록</h2><dl><div class="stat"><dt>Tasks</dt><dd>3</dd></div><div class="stat"><dt>Findings</dt><dd>1</dd></div><div class="stat"><dt>Runs</dt><dd>1</dd></div></dl></div>
+<div class="links"><h2>근거 파일 열기</h2><a href="report.md">출처와 결과 보고서</a>
+<a href="summary.json">검증 요약 JSON</a><a href="transcript.json">실제 명령 호출 기록</a></div></section>
+<section class="notice"><h2>실행 완료와 과학적 결론은 다릅니다.</h2>
+<p>Synthetic local control-plane demonstration only. Source matching is not authenticity or truth; arithmetic is not scientific validation. No provider, remote, service, GPU, speed or cost claims. Resume checks completed-result persistence, not recovery of a live or interrupted worker.</p><p>원문 일치는 보관한 출처와의 일치입니다. 이 화면은 연구 성능, 보안 인증 또는 공개 승인을 뜻하지 않습니다.</p></section>
+<section><h2>명령별 상세 기록</h2><article class="command-record" id="command-01"><details><summary>01. initialize</summary><pre>python -m altauto --project project init --brief brief.md --protocol protocol.json --policy policy.json</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-02"><details><summary>02. propose-reading</summary><pre>python -m altauto --project project propose reading-task.json</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-03"><details><summary>03. select-reading</summary><pre>python -m altauto --project project next --task read-note</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-04"><details><summary>04. register-source</summary><pre>python -m altauto --project project source --citation &#x27;Synthetic archive note, paragraphs 2-3&#x27; --revision revision-1 --file source.md</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-05"><details><summary>05. record-valid-quote</summary><pre>python -m altauto --project project record finding.json</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-06"><details><summary>06. reject-invalid-quote</summary><pre>python -m altauto --project project record invalid-finding.json</pre><p class="returncode">Exit code: 2. Expected: 2.</p></details></article><article class="command-record" id="command-07"><details><summary>07. complete-reading</summary><pre>python -m altauto --project project complete read-note</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-08"><details><summary>08. propose-arithmetic</summary><pre>python -m altauto --project project propose test-task.json</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-09"><details><summary>09. execute-arithmetic</summary><pre>python -m altauto --project project execute arithmetic-smoke</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-10"><details><summary>10. reject-duplicate-execution</summary><pre>python -m altauto --project project execute arithmetic-smoke</pre><p class="returncode">Exit code: 2. Expected: 2.</p></details></article><article class="command-record" id="command-11"><details><summary>11. propose-before-steering</summary><pre>python -m altauto --project project propose stale-task.json</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-12"><details><summary>12. steer</summary><pre>python -m altauto --project project steer --brief steered-brief.md --protocol protocol.json</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-13"><details><summary>13. reject-stale-execution</summary><pre>python -m altauto --project project execute stale-smoke</pre><p class="returncode">Exit code: 2. Expected: 2.</p></details></article><article class="command-record" id="command-14"><details><summary>14. reject-stale-decision</summary><pre>python -m altauto --project project decide stale-smoke --rationale &#x27;A stale task must not gain a new decision.&#x27;</pre><p class="returncode">Exit code: 2. Expected: 2.</p></details></article><article class="command-record" id="command-15"><details><summary>15. status-before-resume</summary><pre>python -m altauto --project project status</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-16"><details><summary>16. resume-in-new-process</summary><pre>python -m altauto --project project resume</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-17"><details><summary>17. status-in-new-process</summary><pre>python -m altauto --project project status</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article><article class="command-record" id="command-18"><details><summary>18. report</summary><pre>python -m altauto --project project report</pre><p class="returncode">Exit code: 0. Expected: 0.</p></details></article></section></main>
+<footer>altauto / Offline showcase. This page loads no external resources and executes no JavaScript.
+Open the transcript to inspect what actually ran.</footer></body></html>

@@ -1,0 +1,10 @@
+{
+  "schema": "altauto-preview-manifest-v1",
+  "files": {
+    "README.md": "57393db229b466be8ff9a8d7ccf7467700ba36465c9778bcce536258e56ee583",
+    "index.html": "6d8926da21541950fa99925f8cf548d32817ee9cb7985fa88c9e48784c66e820",
+    "report.md": "4592910a7faea8f7e2d72aa7a0e1dabb06dae7dffcce6969ee14ff9c1cd7f6e0",
+    "summary.json": "bbc968b0a285a0c84b255cb2406129e447c3c9d6410cf78d5b1cae76a21cb299",
+    "transcript.json": "02a0a7cba386efa6d1a87f66cde0c3598d55a4fbc6e81dd5f89f1990c8e93f80"
+  }
+}

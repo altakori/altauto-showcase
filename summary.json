@@ -1,0 +1,183 @@
+{
+  "schema": "altauto-showcase-v1",
+  "synthetic": true,
+  "network_used": false,
+  "checks": [
+    {
+      "id": "selection",
+      "label": "Explicit task selection",
+      "passed": true,
+      "detail": "The real CLI selected the accepted reading task."
+    },
+    {
+      "id": "source-finding",
+      "label": "Hash-bound source and exact quotation",
+      "passed": true,
+      "detail": "One exact quotation is retained with source hash/revision and unverified validity."
+    },
+    {
+      "id": "invalid-quote",
+      "label": "Invalid quote rejected without ledger changes",
+      "passed": true,
+      "detail": "The invented quotation returned exit 2; all ledger bytes are unchanged."
+    },
+    {
+      "id": "arithmetic",
+      "label": "Bounded arithmetic result, not scientific success",
+      "passed": true,
+      "detail": "Means 2 and 3 yield delta 1; terminal status and claim boundary were inspected."
+    },
+    {
+      "id": "duplicate",
+      "label": "Duplicate execution refused",
+      "passed": true,
+      "detail": "A second execution returned exit 2 without a new run or ledger mutation."
+    },
+    {
+      "id": "steering",
+      "label": "Steering requires review of stale work",
+      "passed": true,
+      "detail": "Stale execution/decision returned exit 2; the original completed result is unchanged."
+    },
+    {
+      "id": "resume",
+      "label": "Separate-process replay preserves completed evidence",
+      "passed": true,
+      "detail": "Independent CLI processes replay the same state; resume does not overwrite results."
+    },
+    {
+      "id": "report",
+      "label": "Report retains evidence and limitations",
+      "passed": true,
+      "detail": "The CLI report contains the quotation, provenance, original run and review requirement."
+    },
+    {
+      "id": "cli-exits",
+      "label": "Every real CLI exit matches its contract",
+      "passed": true,
+      "detail": "Expected negative-path exits are recorded, not hidden or retried."
+    },
+    {
+      "id": "counts",
+      "label": "Bounded final state",
+      "passed": true,
+      "detail": "Three accepted tasks, one finding, one completed run; stale work remains for review."
+    }
+  ],
+  "steps": [
+    {
+      "name": "initialize",
+      "command": "python -m altauto --project project init --brief brief.md --protocol protocol.json --policy policy.json",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "propose-reading",
+      "command": "python -m altauto --project project propose reading-task.json",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "select-reading",
+      "command": "python -m altauto --project project next --task read-note",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "register-source",
+      "command": "python -m altauto --project project source --citation 'Synthetic archive note, paragraphs 2-3' --revision revision-1 --file source.md",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "record-valid-quote",
+      "command": "python -m altauto --project project record finding.json",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "reject-invalid-quote",
+      "command": "python -m altauto --project project record invalid-finding.json",
+      "returncode": 2,
+      "expected_returncode": 2
+    },
+    {
+      "name": "complete-reading",
+      "command": "python -m altauto --project project complete read-note",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "propose-arithmetic",
+      "command": "python -m altauto --project project propose test-task.json",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "execute-arithmetic",
+      "command": "python -m altauto --project project execute arithmetic-smoke",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "reject-duplicate-execution",
+      "command": "python -m altauto --project project execute arithmetic-smoke",
+      "returncode": 2,
+      "expected_returncode": 2
+    },
+    {
+      "name": "propose-before-steering",
+      "command": "python -m altauto --project project propose stale-task.json",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "steer",
+      "command": "python -m altauto --project project steer --brief steered-brief.md --protocol protocol.json",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "reject-stale-execution",
+      "command": "python -m altauto --project project execute stale-smoke",
+      "returncode": 2,
+      "expected_returncode": 2
+    },
+    {
+      "name": "reject-stale-decision",
+      "command": "python -m altauto --project project decide stale-smoke --rationale 'A stale task must not gain a new decision.'",
+      "returncode": 2,
+      "expected_returncode": 2
+    },
+    {
+      "name": "status-before-resume",
+      "command": "python -m altauto --project project status",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "resume-in-new-process",
+      "command": "python -m altauto --project project resume",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "status-in-new-process",
+      "command": "python -m altauto --project project status",
+      "returncode": 0,
+      "expected_returncode": 0
+    },
+    {
+      "name": "report",
+      "command": "python -m altauto --project project report",
+      "returncode": 0,
+      "expected_returncode": 0
+    }
+  ],
+  "results": {
+    "tasks": 3,
+    "findings": 1,
+    "runs": 1
+  },
+  "scope": "Synthetic local control-plane demonstration only. Source matching is not authenticity or truth; arithmetic is not scientific validation. No provider, remote, service, GPU, speed or cost claims. Resume checks completed-result persistence, not recovery of a live or interrupted worker."
+}
